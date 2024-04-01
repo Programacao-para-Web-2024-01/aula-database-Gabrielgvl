@@ -6,7 +6,7 @@ import (
 )
 
 type Student struct {
-	Id    int    `json:"id"`
+	Id    int64    `json:"id"`
 	Name  string `json:"name"`
 	Age   int    `json:"age"`
 	Email string `json:"email"`
@@ -30,6 +30,7 @@ func (sr *StudentRepository) List() ([]Student, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var students []Student
 
@@ -42,8 +43,6 @@ func (sr *StudentRepository) List() ([]Student, error) {
 
 		students = append(students, student)
 	}
-
-	rows.Close()
 
 	return students, nil
 }
@@ -63,24 +62,47 @@ func (sr *StudentRepository) Get(id int) (*Student, error) {
 	return &student, nil
 }
 
-func (sr *StudentRepository) Create(student Student) (int, error) {
-	sr.db.Exec()
+func (sr *StudentRepository) Create(student Student) (int64, error) {
+	result, err := sr.db.Exec(`INSERT INTO students(name, age, email, phone)
+					  VALUES (?, ?, ?, ?)`,
+		student.Name, student.Age, student.Email, student.Phone)
+
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 func (sr *StudentRepository) Update(id int, student Student) error {
-	sr.mu.Lock()
-	defer sr.mu.Unlock()
+	_, err := sr.db.Exec(`UPDATE students
+						SET name=?,
+						    age=?,
+						    email=?,
+						    phone=?
+						WHERE id=?`,
+		student.Name, student.Age, student.Email, student.Phone, id)
 
-	sr.m[id] = student
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (sr *StudentRepository) Delete(id int) error {
-	sr.mu.Lock()
-	defer sr.mu.Unlock()
+	_, err := sr.db.Exec(`DELETE
+							FROM students
+							WHERE id = ?`, id)
 
-	delete(sr.m, id)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
