@@ -1,22 +1,11 @@
-package db
+package student
 
 import (
 	"database/sql"
-	"sync"
 )
-
-type Student struct {
-	Id    int64    `json:"id"`
-	Name  string `json:"name"`
-	Age   int    `json:"age"`
-	Email string `json:"email"`
-	Phone string `json:"phone"`
-}
 
 type StudentRepository struct {
 	db *sql.DB
-	m  map[int]Student
-	mu *sync.RWMutex
 }
 
 func NewStudentRepository(db *sql.DB) *StudentRepository {
