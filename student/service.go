@@ -28,12 +28,14 @@ func (s *StudentService) Create(student Student) (*Student, error) {
 }
 
 func (s *StudentService) Update(student Student) error {
-	_, err := s.Get(student.Id)
+	id := int(student.Id)
+
+	_, err := s.Get(id)
 	if err != nil {
 		return err
 	}
 
-	return s.repo.Update(student.Id, student)
+	return s.repo.Update(id, student)
 }
 
 func (s *StudentService) Delete(id int) error {

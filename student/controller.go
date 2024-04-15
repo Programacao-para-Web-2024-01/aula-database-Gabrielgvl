@@ -1,7 +1,6 @@
 package student
 
 import (
-	"aula-database/db"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -56,7 +55,7 @@ func (s *StudentController) Get(w http.ResponseWriter, req *http.Request) {
 
 func (s *StudentController) Create(w http.ResponseWriter, req *http.Request) {
 	// Leitura do corpo (INPUT)
-	var student db.Student
+	var student Student
 	err := json.NewDecoder(req.Body).Decode(&student)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
@@ -88,7 +87,7 @@ func (s *StudentController) Update(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var student db.Student
+	var student Student
 	err = json.NewDecoder(req.Body).Decode(&student)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
