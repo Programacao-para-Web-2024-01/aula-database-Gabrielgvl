@@ -2,6 +2,7 @@ package main
 
 import (
 	"aula-database/student"
+	"aula-database/user"
 	"database/sql"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
@@ -35,6 +36,10 @@ func createServer() error {
 	studentService := student.NewStudentService(studentRepository)
 	studentController := student.NewStudentController(studentService)
 
+	userRepository := user.NewRepository(db)
+	userService := user.NewService(userRepository)
+	userController := user.NewController(userService)
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /students/", studentController.List)
@@ -43,7 +48,8 @@ func createServer() error {
 	mux.HandleFunc("PUT /students/{id}", appendMiddlewares(studentController.Update, authentication))
 	mux.HandleFunc("DELETE /students/{id}", appendMiddlewares(studentController.Delete, authentication))
 
-	mux.HandleFunc("POST /auth/", createTokenHandler)
+	mux.HandleFunc("POST /auth/register", userController.Register)
+	mux.HandleFunc("POST /auth/login", userController.Login)
 
 	return http.ListenAndServe("localhost:8080", mux)
 }
@@ -74,15 +80,6 @@ func authentication(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	return nil
-}
-
-func createTokenHandler(w http.ResponseWriter, req *http.Request) {
-	token, err := createToken()
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprint(w, token)
 }
 
 var key = []byte("TOKEN_SECRETO")

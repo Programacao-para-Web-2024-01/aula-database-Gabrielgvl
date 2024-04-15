@@ -10,3 +10,11 @@ CREATE TABLE students
     email VARCHAR(255) NOT NULL,
     phone VARCHAR(11)  NOT NULL
 );
+
+
+CREATE TABLE users
+(
+    id       INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+);
