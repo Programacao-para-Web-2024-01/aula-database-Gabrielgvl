@@ -75,6 +75,8 @@ func (s *StudentController) Create(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+
+	w.WriteHeader(201)
 }
 
 func (s *StudentController) Update(w http.ResponseWriter, req *http.Request) {

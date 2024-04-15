@@ -3,7 +3,9 @@ package main
 import (
 	"aula-database/student"
 	"database/sql"
+	"fmt"
 	"github.com/go-sql-driver/mysql"
+	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"net/http"
 )
@@ -36,10 +38,62 @@ func createServer() error {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /students/", studentController.List)
-	mux.HandleFunc("POST /students/", studentController.Create)
 	mux.HandleFunc("GET /students/{id}", studentController.Get)
-	mux.HandleFunc("PUT /students/{id}", studentController.Update)
-	mux.HandleFunc("DELETE /students/{id}", studentController.Delete)
+	mux.HandleFunc("POST /students/", appendMiddlewares(studentController.Create, authentication))
+	mux.HandleFunc("PUT /students/{id}", appendMiddlewares(studentController.Update, authentication))
+	mux.HandleFunc("DELETE /students/{id}", appendMiddlewares(studentController.Delete, authentication))
+
+	mux.HandleFunc("POST /auth/", createTokenHandler)
 
 	return http.ListenAndServe("localhost:8080", mux)
+}
+
+func appendMiddlewares(
+	handler func(w http.ResponseWriter, req *http.Request),
+	mw ...func(w http.ResponseWriter, req *http.Request) error,
+) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		for _, middleware := range mw {
+			err := middleware(w, req)
+			if err != nil {
+				fmt.Fprint(w, err)
+				return
+			}
+		}
+
+		handler(w, req)
+	}
+}
+
+func authentication(w http.ResponseWriter, req *http.Request) error {
+	authorization := req.Header.Get("Authorization")
+	_, err := validateToken(authorization)
+	if err != nil {
+		w.WriteHeader(401)
+		return err
+	}
+
+	return nil
+}
+
+func createTokenHandler(w http.ResponseWriter, req *http.Request) {
+	token, err := createToken()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	fmt.Fprint(w, token)
+}
+
+var key = []byte("TOKEN_SECRETO")
+var jwtManager = jwt.New(jwt.SigningMethodHS256)
+
+func createToken() (string, error) {
+	return jwtManager.SignedString(key)
+}
+
+func validateToken(token string) (*jwt.Token, error) {
+	return jwt.NewParser().Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return key, nil
+	})
 }
