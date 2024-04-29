@@ -2,6 +2,7 @@ package main
 
 import (
 	"aula-database/student"
+	"aula-database/subject"
 	"aula-database/user"
 	"database/sql"
 	"fmt"
@@ -32,8 +33,11 @@ func connectDB() *sql.DB {
 func createServer() error {
 	db := connectDB()
 
+	subjectRepository := subject.NewRepository(db)
+	subjectService := subject.NewService(subjectRepository)
+
 	studentRepository := student.NewStudentRepository(db)
-	studentService := student.NewStudentService(studentRepository)
+	studentService := student.NewStudentService(studentRepository, subjectService)
 	studentController := student.NewStudentController(studentService)
 
 	userRepository := user.NewRepository(db)

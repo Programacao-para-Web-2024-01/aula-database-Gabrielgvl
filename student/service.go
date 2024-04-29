@@ -1,11 +1,14 @@
 package student
 
+import "aula-database/subject"
+
 type StudentService struct {
-	repo *StudentRepository
+	repo           *StudentRepository
+	subjectService *subject.Service
 }
 
-func NewStudentService(repo *StudentRepository) *StudentService {
-	return &StudentService{repo: repo}
+func NewStudentService(repo *StudentRepository, subjectService *subject.Service) *StudentService {
+	return &StudentService{repo: repo, subjectService: subjectService}
 }
 
 func (s *StudentService) List() ([]Student, error) {
@@ -13,7 +16,17 @@ func (s *StudentService) List() ([]Student, error) {
 }
 
 func (s *StudentService) Get(id int) (*Student, error) {
-	return s.repo.Get(id)
+	student, err := s.repo.Get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	student.Subjects, err = s.subjectService.GetByStudentID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return student, nil
 }
 
 func (s *StudentService) Create(student Student) (*Student, error) {

@@ -2,6 +2,7 @@ package student
 
 import (
 	"database/sql"
+	"encoding/json"
 )
 
 type StudentRepository struct {
@@ -15,7 +16,18 @@ func NewStudentRepository(db *sql.DB) *StudentRepository {
 }
 
 func (sr *StudentRepository) List() ([]Student, error) {
-	rows, err := sr.db.Query(`SELECT id, name, age, email, phone FROM students`)
+	rows, err := sr.db.Query(`
+		SELECT st.id,
+		       st.name,
+		       st.age,
+		       st.email,
+		       st.phone, 
+		       IF(COUNT(su.id) > 0, JSON_ARRAYAGG(su.name), NULL) subjects
+		FROM students st
+         	LEFT JOIN students_subjects ss ON st.id = ss.student_id
+         	LEFT JOIN subjects su ON ss.subject_id = su.id
+		GROUP BY st.id`,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -25,9 +37,24 @@ func (sr *StudentRepository) List() ([]Student, error) {
 
 	for rows.Next() {
 		var student Student
-		err = rows.Scan(&student.Id, &student.Name, &student.Age, &student.Email, &student.Phone)
+		var subjects []byte
+		err = rows.Scan(
+			&student.Id,
+			&student.Name,
+			&student.Age,
+			&student.Email,
+			&student.Phone,
+			&subjects,
+		)
 		if err != nil {
 			return nil, err
+		}
+
+		if subjects != nil {
+			err = json.Unmarshal(subjects, &student.SubjectsName)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		students = append(students, student)
