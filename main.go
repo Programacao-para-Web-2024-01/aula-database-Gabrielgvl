@@ -51,6 +51,7 @@ func createServer() error {
 	mux.HandleFunc("POST /students/", appendMiddlewares(studentController.Create, authentication))
 	mux.HandleFunc("PUT /students/{id}", appendMiddlewares(studentController.Update, authentication))
 	mux.HandleFunc("DELETE /students/{id}", appendMiddlewares(studentController.Delete, authentication))
+	mux.HandleFunc("PUT /students/{id}/subjects", appendMiddlewares(studentController.AssociateSubjects, authentication))
 
 	mux.HandleFunc("POST /auth/register", userController.Register)
 	mux.HandleFunc("POST /auth/login", userController.Login)

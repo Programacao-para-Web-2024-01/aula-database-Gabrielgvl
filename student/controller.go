@@ -130,3 +130,39 @@ func (s *StudentController) Delete(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(204)
 }
+
+func (s *StudentController) AssociateSubjects(w http.ResponseWriter, req *http.Request) {
+	// Input
+	idRaw := req.PathValue("id")
+
+	id, err := strconv.Atoi(idRaw)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	var subjectsIDs []int
+	err = json.NewDecoder(req.Body).Decode(&subjectsIDs)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	err = s.service.AssociateSubjects(id, subjectsIDs)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	student, err := s.service.Get(id)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(student)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+}

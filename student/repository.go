@@ -3,6 +3,8 @@ package student
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"strings"
 )
 
 type StudentRepository struct {
@@ -116,6 +118,30 @@ func (sr *StudentRepository) Delete(id int) error {
 							FROM students
 							WHERE id = ?`, id)
 
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (sr *StudentRepository) AssociateSubjects(studentID int, subjectIDs []int) error {
+	var builder strings.Builder
+	var params []any
+	for i, subjectID := range subjectIDs {
+		params = append(params, studentID, subjectID)
+		builder.WriteString("(?, ?)")
+		if i < len(subjectIDs)-1 {
+			builder.WriteString(",")
+		}
+	}
+
+	const query = `
+			INSERT INTO students_subjects(student_id, subject_id)
+			VALUES %s;`
+
+	fmt.Println(fmt.Sprintf(query, builder.String()))
+	_, err := sr.db.Exec(fmt.Sprintf(query, builder.String()), params...)
 	if err != nil {
 		return err
 	}

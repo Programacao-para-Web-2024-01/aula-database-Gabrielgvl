@@ -59,3 +59,7 @@ func (s *StudentService) Delete(id int) error {
 
 	return s.repo.Delete(id)
 }
+
+func (s *StudentService) AssociateSubjects(studentID int, subjectIDs []int) error {
+	return s.repo.AssociateSubjects(studentID, subjectIDs)
+}
